@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Marksheet</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Student Marksheet</h1>
+
+        <div class="filters">
+
+            <div class="filter-group">
+                <label for="prn">PRN</label>
+                <input
+                    type="text"
+                    id="prn"
+                    placeholder="Enter PRN"
+                >
+            </div>
+
+            <div class="filter-group">
+                <label for="subject">Subject</label>
+                <select id="subject">
+                    <option value="">All Subjects</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="exam">Exam</label>
+                <select id="exam">
+                    <option value="">All Exams</option>
+                </select>
+            </div>
+
+            <button id="filterButton">
+                Filter
+            </button>
+
+            <button id="resetButton">
+                Reset
+            </button>
+
+        </div>
+
+        <p id="resultCount"></p>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>PRN</th>
+                        <th>Subject</th>
+                        <th>Exam</th>
+                        <th>Marks</th>
+                        <th>Pass</th>
+                    </tr>
+                </thead>
+
+                <tbody id="marksTable">
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
