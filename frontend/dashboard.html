@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Dashboard | Student Portal</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body class="dashboard-body">
+
+    <div class="background-effects">
+
+        <div class="glow glow-one"></div>
+
+        <div class="glow glow-two"></div>
+
+        <div class="glow glow-three"></div>
+
+    </div>
+
+
+    <main class="dashboard-page">
+
+        <!-- Navigation -->
+
+        <header class="topbar glass-card">
+
+            <div class="portal-brand">
+
+                <img
+                    src="assets/aj-logo.png"
+                    alt="AJ"
+                    class="aj-logo-dashboard"
+                >
+
+                <div>
+
+                    <strong>
+                        Student Portal
+                    </strong>
+
+                    <span>
+                        Academic Management
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+            >
+                Logout
+            </button>
+
+        </header>
+
+
+        <!-- Welcome -->
+
+        <section class="welcome-section">
+
+            <div>
+
+                <p class="welcome-label">
+                    STUDENT DASHBOARD
+                </p>
+
+                <h1>
+                    Welcome back,
+                    <span id="studentNameHeading">
+                        Student
+                    </span>
+                </h1>
+
+                <p>
+                    Here's an overview of your academic performance.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Student Information -->
+
+        <section class="student-card glass-card">
+
+            <div class="student-profile">
+
+                <div class="profile-avatar">
+                    👨‍🎓
+                </div>
+
+                <div>
+
+                    <span class="info-label">
+                        Student
+                    </span>
+
+                    <strong id="studentName">
+                        —
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <span class="info-label">
+                    PRN
+                </span>
+
+                <strong id="studentPrn">
+                    —
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span class="info-label">
+                    Account Type
+                </span>
+
+                <strong id="studentRole">
+                    —
+                </strong>
+
+            </div>
+
+        </section>
+
+
+        <!-- Statistics -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    📚
+                </div>
+
+                <div>
+
+                    <span>
+                        Subjects
+                    </span>
+
+                    <strong id="subjectCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    📝
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Marks
+                    </span>
+
+                    <strong id="totalMarks">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <span>
+                        Passed
+                    </span>
+
+                    <strong id="passedCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    !
+                </div>
+
+                <div>
+
+                    <span>
+                        Failed
+                    </span>
+
+                    <strong id="failedCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Marks -->
+
+        <section class="marks-section glass-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="section-label">
+                        ACADEMIC RECORD
+                    </p>
+
+                    <h2>
+                        My Marks
+                    </h2>
+
+                    <p>
+                        Your examination-wise academic performance
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="dashboardMessage"
+                class="dashboard-message"
+            ></div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Subject
+                            </th>
+
+                            <th>
+                                Exam
+                            </th>
+
+                            <th>
+                                Marks
+                            </th>
+
+                            <th>
+                                Result
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="marksTable">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+
+        <footer class="dashboard-footer">
+
+            <span>
+                Student Portal
+            </span>
+
+            <span>
+                Academic Results System
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <script src="dashboard.js"></script>
+
+</body>
+
+</html>

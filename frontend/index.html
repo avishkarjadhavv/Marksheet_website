@@ -1,81 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Marksheet</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <title>Student Portal | Login</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
 
-<body>
 
-    <div class="container">
+<body class="login-body">
 
-        <h1>Student Marksheet</h1>
+    <div class="background-effects">
 
-        <div class="filters">
+        <div class="glow glow-one"></div>
 
-            <div class="filter-group">
-                <label for="prn">PRN</label>
-                <input
-                    type="text"
-                    id="prn"
-                    placeholder="Enter PRN"
-                >
-            </div>
+        <div class="glow glow-two"></div>
 
-            <div class="filter-group">
-                <label for="subject">Subject</label>
-                <select id="subject">
-                    <option value="">All Subjects</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="exam">Exam</label>
-                <select id="exam">
-                    <option value="">All Exams</option>
-                </select>
-            </div>
-
-            <button id="filterButton">
-                Filter
-            </button>
-
-            <button id="resetButton">
-                Reset
-            </button>
-
-        </div>
-
-        <p id="resultCount"></p>
-
-        <div class="table-container">
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>PRN</th>
-                        <th>Subject</th>
-                        <th>Exam</th>
-                        <th>Marks</th>
-                        <th>Pass</th>
-                    </tr>
-                </thead>
-
-                <tbody id="marksTable">
-                </tbody>
-
-            </table>
-
-        </div>
+        <div class="glow glow-three"></div>
 
     </div>
+
+
+    <main class="login-page">
+
+        <div class="login-card glass-card">
+
+            <!-- Brand -->
+
+            <div class="brand">
+
+                <img
+                    src="assets/aj-logo.png"
+                    alt="AJ"
+                    class="aj-logo-login"
+                >
+
+                <div class="brand-badge">
+                    STUDENT PORTAL
+                </div>
+
+                <h1>
+                    Welcome back
+                </h1>
+
+                <p>
+                    Sign in to access your academic results
+                </p>
+
+            </div>
+
+
+            <!-- Login form -->
+
+            <form id="loginForm">
+
+                <div class="input-group">
+
+                    <label for="prn">
+                        PRN
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <span class="input-icon">
+                            ID
+                        </span>
+
+                        <input
+                            type="text"
+                            id="prn"
+                            placeholder="Enter your PRN"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <span class="input-icon">
+                            •••
+                        </span>
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    id="loginButton"
+                >
+
+                    <span id="loginButtonText">
+                        Sign In
+                    </span>
+
+                    <span
+                        id="loginSpinner"
+                        class="login-spinner"
+                    ></span>
+
+                </button>
+
+
+                <p
+                    id="loginMessage"
+                    class="login-message"
+                ></p>
+
+            </form>
+
+
+            <div class="login-footer">
+
+                <span class="security-dot"></span>
+
+                Secure Student Access
+
+            </div>
+
+        </div>
+
+    </main>
+
 
     <script src="script.js"></script>
 
 </body>
+
 </html>
