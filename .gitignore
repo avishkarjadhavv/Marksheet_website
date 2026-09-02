@@ -1,0 +1,15 @@
+# Environment variables
+.env
+backend/.env
+
+# Python virtual environments
+.venv/
+backend/.venv/
+
+# Python cache
+__pycache__/
+backend/__pycache__/
+api/__pycache__/
+
+# Local CSV data
+Marks_csv_data/

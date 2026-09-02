@@ -1,12 +1,13 @@
-#  python -m uvicorn main:app --reload
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import get_connection
+
+from api.database import get_connection
+
 
 app = FastAPI()
 
-# Allow our frontend to communicate with the API
+
+# Allow frontend to communicate with the API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,9 +16,11 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.get("/api")
 def home():
-    return {"message": "Marksheet API is running"}
+    return {
+        "message": "Marksheet API is running"
+    }
 
 
 @app.get("/api/marks")
