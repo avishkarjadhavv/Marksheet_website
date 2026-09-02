@@ -52,6 +52,21 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class CreateStudentRequest(BaseModel):
+    prn: str = Field(
+        min_length=1,
+        max_length=50
+    )
+    name: str = Field(
+        min_length=1,
+        max_length=100
+    )
+    password: str = Field(
+        min_length=8,
+        max_length=128
+    )
+
+
 class BlockRequest(BaseModel):
     is_blocked: bool
 
@@ -522,6 +537,113 @@ def get_all_students(
 
 
     return result
+
+
+# =================================
+# Create Student Account
+# =================================
+
+@app.post("/api/admin/students")
+def create_student(
+    request: CreateStudentRequest,
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+):
+
+    prn = request.prn.strip()
+    name = request.name.strip()
+
+    if not prn:
+        raise HTTPException(
+            status_code=400,
+            detail="PRN cannot be empty"
+        )
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Name cannot be empty"
+        )
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM students
+        WHERE prn = %s
+        """,
+        (prn,)
+    )
+
+    existing_student = cursor.fetchone()
+
+    if existing_student is not None:
+        cursor.close()
+        connection.close()
+
+        raise HTTPException(
+            status_code=409,
+            detail="A student account with this PRN already exists."
+        )
+
+    hashed_password = password_hash.hash(
+        request.password
+    )
+
+    insert_query = """
+        INSERT INTO students
+        (
+            prn,
+            password_hash,
+            name,
+            role,
+            is_blocked
+        )
+        VALUES
+        (
+            %s,
+            %s,
+            %s,
+            'student',
+            FALSE
+        )
+        RETURNING
+            id,
+            prn,
+            name,
+            role,
+            is_blocked
+    """
+
+    cursor.execute(
+        insert_query,
+        (
+            prn,
+            hashed_password,
+            name
+        )
+    )
+
+    student = cursor.fetchone()
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "message": "Student account created successfully",
+        "student": {
+            "id": student[0],
+            "prn": student[1],
+            "name": student[2],
+            "role": student[3],
+            "is_blocked": student[4]
+        }
+    }
 
 
 # =================================
