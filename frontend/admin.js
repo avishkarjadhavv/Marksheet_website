@@ -108,6 +108,66 @@ const logoutButton =
 
 
 // =================================
+// Create Student DOM Elements
+// =================================
+
+const createStudentButton =
+    document.getElementById(
+        "createStudentButton"
+    );
+
+const createStudentSection =
+    document.getElementById(
+        "createStudentSection"
+    );
+
+const closeCreateStudentButton =
+    document.getElementById(
+        "closeCreateStudentButton"
+    );
+
+const cancelCreateStudentButton =
+    document.getElementById(
+        "cancelCreateStudentButton"
+    );
+
+const createStudentForm =
+    document.getElementById(
+        "createStudentForm"
+    );
+
+const createStudentPRN =
+    document.getElementById(
+        "createStudentPRN"
+    );
+
+const createStudentName =
+    document.getElementById(
+        "createStudentName"
+    );
+
+const createStudentPassword =
+    document.getElementById(
+        "createStudentPassword"
+    );
+
+const createStudentConfirmPassword =
+    document.getElementById(
+        "createStudentConfirmPassword"
+    );
+
+const createStudentSubmitButton =
+    document.getElementById(
+        "createStudentSubmitButton"
+    );
+
+const createStudentMessage =
+    document.getElementById(
+        "createStudentMessage"
+    );
+
+
+// =================================
 // Marks Management DOM Elements
 // =================================
 
@@ -218,6 +278,242 @@ let currentMarks = [];
 // =================================
 
 let editingMarkId = null;
+
+
+// =================================
+// Create Student Form
+// =================================
+
+function openCreateStudentForm() {
+
+    createStudentForm.reset();
+
+    createStudentMessage.textContent =
+        "";
+
+    createStudentSubmitButton.disabled =
+        false;
+
+    createStudentSubmitButton.textContent =
+        "Create Student";
+
+    createStudentSection.style.display =
+        "block";
+
+    createStudentSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    createStudentPRN.focus();
+
+}
+
+
+function closeCreateStudentForm() {
+
+    createStudentSection.style.display =
+        "none";
+
+    createStudentForm.reset();
+
+    createStudentMessage.textContent =
+        "";
+
+}
+
+
+async function createStudent() {
+
+    const prn =
+        createStudentPRN.value.trim();
+
+    const name =
+        createStudentName.value.trim();
+
+    const password =
+        createStudentPassword.value;
+
+    const confirmPassword =
+        createStudentConfirmPassword.value;
+
+
+    if (!prn || !name || !password || !confirmPassword) {
+
+        createStudentMessage.textContent =
+            "Please fill in all fields.";
+
+        return;
+
+    }
+
+
+    if (password.length < 8) {
+
+        createStudentMessage.textContent =
+            "Password must be at least 8 characters.";
+
+        return;
+
+    }
+
+
+    if (password.length > 128) {
+
+        createStudentMessage.textContent =
+            "Password must not exceed 128 characters.";
+
+        return;
+
+    }
+
+
+    if (password !== confirmPassword) {
+
+        createStudentMessage.textContent =
+            "Passwords do not match.";
+
+        return;
+
+    }
+
+
+    try {
+
+        createStudentSubmitButton.disabled =
+            true;
+
+        createStudentSubmitButton.textContent =
+            "Creating...";
+
+        createStudentMessage.textContent =
+            "Creating student account...";
+
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/admin/students`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization":
+                            `Bearer ${authToken}`,
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        prn: prn,
+                        name: name,
+                        password: password
+                    })
+                }
+            );
+
+
+        if (response.status === 401) {
+
+            logoutUser();
+            return;
+
+        }
+
+
+        if (response.status === 403) {
+
+            createStudentMessage.textContent =
+                "You do not have admin permission.";
+
+            return;
+
+        }
+
+
+        let data = {};
+
+        try {
+            data = await response.json();
+        }
+        catch (error) {
+            data = {};
+        }
+
+
+        if (response.status === 409) {
+
+            createStudentMessage.textContent =
+                data.detail ||
+                "A student with this PRN already exists.";
+
+            return;
+
+        }
+
+
+        if (!response.ok) {
+
+            createStudentMessage.textContent =
+                data.detail ||
+                "Unable to create student.";
+
+            return;
+
+        }
+
+
+        createStudentMessage.textContent =
+            `Student ${data.student?.prn || prn} created successfully.`;
+
+        createStudentForm.reset();
+
+        await loadStudents();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        createStudentMessage.textContent =
+            "Unable to create student. Please try again.";
+
+    }
+    finally {
+
+        createStudentSubmitButton.disabled =
+            false;
+
+        createStudentSubmitButton.textContent =
+            "Create Student";
+
+    }
+
+}
+
+
+createStudentButton.addEventListener(
+    "click",
+    openCreateStudentForm
+);
+
+
+closeCreateStudentButton.addEventListener(
+    "click",
+    closeCreateStudentForm
+);
+
+
+cancelCreateStudentButton.addEventListener(
+    "click",
+    closeCreateStudentForm
+);
+
+
+createStudentForm.addEventListener(
+    "submit",
+    function (event) {
+        event.preventDefault();
+        createStudent();
+    }
+);
 
 
 // =================================

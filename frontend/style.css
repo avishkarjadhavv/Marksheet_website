@@ -2039,3 +2039,139 @@ body {
             0.1
         );
 }
+
+
+/* =================================
+   Create Student
+================================= */
+
+.admin-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+
+.admin-primary-button {
+    padding: 10px 16px;
+    border: 1px solid rgba(129, 140, 248, 0.35);
+    border-radius: 11px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.22);
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+
+.admin-primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+}
+
+
+.admin-primary-button:active {
+    transform: translateY(0);
+}
+
+
+.admin-primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+.admin-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+.form-group {
+    margin-bottom: 0;
+}
+
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    font-size: 13px;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: rgba(129, 140, 248, 0.7);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+
+.form-group select option {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+
+.admin-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+
+@media (max-width: 700px) {
+
+    .admin-section-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-primary-button {
+        width: 100%;
+    }
+
+    .admin-form {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-form-actions .admin-primary-button,
+    .admin-form-actions .logout-button {
+        width: 100%;
+    }
+
+}
