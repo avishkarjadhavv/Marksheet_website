@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,7 +15,6 @@
         rel="stylesheet"
         href="style.css"
     >
-
 </head>
 
 
@@ -78,6 +76,7 @@
         </header>
 
 
+
         <!-- =================================
              Welcome
         ================================= -->
@@ -101,6 +100,7 @@
             </div>
 
         </section>
+
 
 
         <!-- =================================
@@ -130,6 +130,7 @@
             </div>
 
 
+
             <div class="stat-card glass-card">
 
                 <div class="stat-icon">
@@ -149,6 +150,7 @@
                 </div>
 
             </div>
+
 
 
             <div class="stat-card glass-card">
@@ -172,6 +174,7 @@
             </div>
 
 
+
             <div class="stat-card glass-card">
 
                 <div class="stat-icon">
@@ -193,6 +196,7 @@
             </div>
 
         </section>
+
 
 
         <!-- =================================
@@ -222,6 +226,7 @@
             </div>
 
 
+
             <!-- Search -->
 
             <div class="admin-search">
@@ -235,12 +240,14 @@
             </div>
 
 
+
             <!-- Message -->
 
             <div
                 id="adminMessage"
                 class="dashboard-message"
             ></div>
+
 
 
             <!-- Student Table -->
@@ -289,6 +296,266 @@
         </section>
 
 
+
+        <!-- =================================
+             Marks Management
+        ================================= -->
+
+        <section
+            id="marksManagementSection"
+            class="marks-section glass-card"
+            style="display: none;"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="section-label">
+                        ACADEMIC RECORDS
+                    </p>
+
+                    <h2>
+                        Marks Management
+                    </h2>
+
+                    <p id="selectedStudentInfo">
+                        Manage marks for selected student.
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="closeMarksButton"
+                    class="logout-button"
+                    type="button"
+                >
+                    Close
+                </button>
+
+            </div>
+
+
+
+            <!-- Marks Message -->
+
+            <div
+                id="marksMessage"
+                class="dashboard-message"
+            ></div>
+
+
+
+            <!-- Add Marks Button -->
+
+            <div
+                class="admin-search"
+                style="display: flex; justify-content: flex-end;"
+            >
+
+                <button
+                    id="addMarksButton"
+                    class="logout-button"
+                    type="button"
+                >
+                    + Add Marks
+                </button>
+
+            </div>
+
+
+
+            <!-- Marks Table -->
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Subject
+                            </th>
+
+                            <th>
+                                Exam
+                            </th>
+
+                            <th>
+                                Marks
+                            </th>
+
+                            <th>
+                                Result
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="marksTable">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================
+             Add / Edit Marks Form
+        ================================= -->
+
+        <section
+            id="marksFormSection"
+            class="marks-section glass-card"
+            style="display: none;"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="section-label">
+                        MARKS RECORD
+                    </p>
+
+                    <h2 id="marksFormTitle">
+                        Add Marks
+                    </h2>
+
+                    <p>
+                        Enter the academic record details.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div
+                id="marksFormMessage"
+                class="dashboard-message"
+            ></div>
+
+
+
+            <form id="marksForm">
+
+                <div class="form-group">
+
+                    <label for="marksSubject">
+                        Subject
+                    </label>
+
+                    <input
+                        type="text"
+                        id="marksSubject"
+                        placeholder="Enter subject"
+                        maxlength="100"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="marksExam">
+                        Exam
+                    </label>
+
+                    <select
+                        id="marksExam"
+                        required
+                    >
+
+                        <option value="">
+                            Select Exam
+                        </option>
+
+                        <option value="TA1">
+                            TA1
+                        </option>
+
+                        <option value="MSE">
+                            MSE
+                        </option>
+
+                        <option value="ESE">
+                            ESE
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="marksValue">
+                        Marks
+                    </label>
+
+                    <input
+                        type="number"
+                        id="marksValue"
+                        placeholder="Enter marks"
+                        min="0"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div
+                    style="
+                        display: flex;
+                        gap: 10px;
+                        margin-top: 15px;
+                    "
+                >
+
+                    <button
+                        type="submit"
+                        class="logout-button"
+                        id="saveMarksButton"
+                    >
+                        Save Marks
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="logout-button"
+                        id="cancelMarksButton"
+                    >
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+
         <!-- =================================
              Footer
         ================================= -->
@@ -306,6 +573,7 @@
         </footer>
 
     </main>
+
 
 
     <script src="admin.js"></script>

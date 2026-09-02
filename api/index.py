@@ -63,12 +63,112 @@ class ResetPasswordRequest(BaseModel):
     )
 
 
+class MarksCreateRequest(BaseModel):
+    subject: str = Field(
+        min_length=1,
+        max_length=100
+    )
+
+    exam: str = Field(
+        min_length=1,
+        max_length=50
+    )
+
+    marks: int | None = Field(
+        default=None,
+        ge=0
+    )
+
+
+class MarksUpdateRequest(BaseModel):
+    subject: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100
+    )
+
+    exam: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50
+    )
+
+    marks: int | None = Field(
+        default=None,
+        ge=0
+    )
+
+
+# =================================
+# Pass/Fail Calculation
+# =================================
+
+def calculate_is_pass(
+    subject: str,
+    exam: str,
+    marks: int | None
+):
+
+    # No marks = no result
+    if marks is None:
+
+        return None
+
+
+    exam = exam.strip().upper()
+
+    subject = subject.strip().upper()
+
+
+    # =================================
+    # TA1
+    # =================================
+
+    if exam == "TA1":
+
+        if subject == "OS":
+
+            return marks >= 12
+
+        else:
+
+            return marks >= 8
+
+
+    # =================================
+    # MSE
+    # =================================
+
+    if exam == "MSE":
+
+        return marks >= 12
+
+
+    # =================================
+    # ESE
+    # =================================
+
+    if exam == "ESE":
+
+        # ESE passing criteria currently unknown
+        return None
+
+
+    # =================================
+    # Unknown Exam
+    # =================================
+
+    return None
+
+
 # =================================
 # Get Current User
 # =================================
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(
+        security
+    )
 ):
 
     token = credentials.credentials
@@ -82,8 +182,11 @@ def get_current_user(
         )
 
         student_id = payload.get("student_id")
+
         prn = payload.get("prn")
+
         role = payload.get("role")
+
 
         if student_id is None or prn is None:
 
@@ -92,11 +195,17 @@ def get_current_user(
                 detail="Invalid authentication token"
             )
 
+
         return {
+
             "student_id": student_id,
+
             "prn": prn,
+
             "role": role
+
         }
+
 
     except jwt.ExpiredSignatureError:
 
@@ -104,6 +213,7 @@ def get_current_user(
             status_code=401,
             detail="Authentication token has expired"
         )
+
 
     except jwt.InvalidTokenError:
 
@@ -118,7 +228,9 @@ def get_current_user(
 # =================================
 
 def get_current_admin(
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(
+        get_current_user
+    )
 ):
 
     if current_user["role"] != "admin":
@@ -127,6 +239,7 @@ def get_current_admin(
             status_code=403,
             detail="Admin access required"
         )
+
 
     return current_user
 
@@ -149,20 +262,33 @@ def home():
 
 @app.get("/api/marks")
 def get_marks(
+
     prn: str | None = None,
+
     subject: str | None = None,
+
     exam: str | None = None
+
 ):
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
+
     query = """
-        SELECT prn, subject, exam, marks, is_pass
+        SELECT
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
         FROM marksheet
     """
 
+
     conditions = []
+
     values = []
 
 
@@ -206,9 +332,12 @@ def get_marks(
         values
     )
 
+
     rows = cursor.fetchall()
 
+
     cursor.close()
+
     connection.close()
 
 
@@ -245,6 +374,7 @@ def login(
 ):
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -269,7 +399,9 @@ def login(
 
     student = cursor.fetchone()
 
+
     cursor.close()
+
     connection.close()
 
 
@@ -282,10 +414,15 @@ def login(
 
 
     student_id = student[0]
+
     prn = student[1]
+
     stored_password_hash = student[2]
+
     name = student[3]
+
     role = student[4]
+
     is_blocked = student[5]
 
 
@@ -376,13 +513,18 @@ def login(
 
 @app.get("/api/my-marks")
 def get_my_marks(
-    current_user: dict = Depends(get_current_user)
+
+    current_user: dict = Depends(
+        get_current_user
+    )
+
 ):
 
     student_prn = current_user["prn"]
 
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -395,6 +537,7 @@ def get_my_marks(
             is_pass
         FROM marksheet
         WHERE prn = %s
+        ORDER BY id
     """
 
 
@@ -406,7 +549,9 @@ def get_my_marks(
 
     rows = cursor.fetchall()
 
+
     cursor.close()
+
     connection.close()
 
 
@@ -439,7 +584,11 @@ def get_my_marks(
 
 @app.get("/api/admin/test")
 def admin_test(
-    current_admin: dict = Depends(get_current_admin)
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
 ):
 
     return {
@@ -459,10 +608,15 @@ def admin_test(
 
 @app.get("/api/admin/students")
 def get_all_students(
-    current_admin: dict = Depends(get_current_admin)
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
 ):
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -481,9 +635,12 @@ def get_all_students(
 
     cursor.execute(query)
 
+
     rows = cursor.fetchall()
 
+
     cursor.close()
+
     connection.close()
 
 
@@ -544,6 +701,7 @@ def block_unblock_student(
 
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -575,6 +733,7 @@ def block_unblock_student(
     if student is None:
 
         cursor.close()
+
         connection.close()
 
         raise HTTPException(
@@ -590,6 +749,7 @@ def block_unblock_student(
     if student[3] == "admin":
 
         cursor.close()
+
         connection.close()
 
         raise HTTPException(
@@ -599,7 +759,7 @@ def block_unblock_student(
 
 
     # =================================
-    # Update Block Status
+    # Update Status
     # =================================
 
     update_query = """
@@ -620,14 +780,20 @@ def block_unblock_student(
 
     connection.commit()
 
+
     cursor.close()
+
     connection.close()
 
 
     status_text = (
+
         "blocked"
+
         if request.is_blocked
+
         else "unblocked"
+
     )
 
 
@@ -681,11 +847,15 @@ def reset_student_password(
 
         raise HTTPException(
             status_code=400,
-            detail="You cannot reset your own admin password here."
+            detail=(
+                "You cannot reset your own admin "
+                "password here."
+            )
         )
 
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -716,6 +886,7 @@ def reset_student_password(
     if student is None:
 
         cursor.close()
+
         connection.close()
 
         raise HTTPException(
@@ -731,11 +902,15 @@ def reset_student_password(
     if student[3] == "admin":
 
         cursor.close()
+
         connection.close()
 
         raise HTTPException(
             status_code=400,
-            detail="Admin passwords cannot be reset from this endpoint."
+            detail=(
+                "Admin passwords cannot be reset "
+                "from this endpoint."
+            )
         )
 
 
@@ -744,8 +919,8 @@ def reset_student_password(
     # =================================
 
     new_password_hash = password_hash.hash(
-            request.new_password
-        )
+        request.new_password
+    )
 
 
     # =================================
@@ -770,13 +945,11 @@ def reset_student_password(
 
     connection.commit()
 
+
     cursor.close()
+
     connection.close()
 
-
-    # =================================
-    # Response
-    # =================================
 
     return {
 
@@ -790,6 +963,687 @@ def reset_student_password(
             "prn": student[1],
 
             "name": student[2]
+
+        }
+
+    }
+
+
+# =================================
+# Get Student Marks - Admin
+# =================================
+
+@app.get(
+    "/api/admin/students/{student_id}/marks"
+)
+def get_student_marks(
+
+    student_id: int,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Check Student
+    # =================================
+
+    student_query = """
+        SELECT
+            id,
+            prn,
+            name
+        FROM students
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        student_query,
+        (student_id,)
+    )
+
+
+    student = cursor.fetchone()
+
+
+    if student is None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+
+    # =================================
+    # Get Marks
+    # =================================
+
+    marks_query = """
+        SELECT
+            id,
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
+        FROM marksheet
+        WHERE prn = %s
+        ORDER BY id
+    """
+
+
+    cursor.execute(
+        marks_query,
+        (student[1],)
+    )
+
+
+    rows = cursor.fetchall()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    result = []
+
+
+    for row in rows:
+
+        result.append({
+
+            "id": row[0],
+
+            "prn": row[1],
+
+            "subject": row[2],
+
+            "exam": row[3],
+
+            "marks": row[4],
+
+            "is_pass": row[5]
+
+        })
+
+
+    return {
+
+        "student": {
+
+            "id": student[0],
+
+            "prn": student[1],
+
+            "name": student[2]
+
+        },
+
+        "marks": result
+
+    }
+
+
+# =================================
+# Add Student Mark
+# =================================
+
+@app.post(
+    "/api/admin/students/{student_id}/marks"
+)
+def add_student_mark(
+
+    student_id: int,
+
+    request: MarksCreateRequest,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    subject = request.subject.strip()
+
+    exam = request.exam.strip().upper()
+
+
+    if not subject:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Subject cannot be empty"
+        )
+
+
+    if exam not in (
+        "TA1",
+        "MSE",
+        "ESE"
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Exam must be TA1, MSE, or ESE."
+            )
+        )
+
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Find Student
+    # =================================
+
+    student_query = """
+        SELECT
+            id,
+            prn,
+            name
+        FROM students
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        student_query,
+        (student_id,)
+    )
+
+
+    student = cursor.fetchone()
+
+
+    if student is None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+
+    # =================================
+    # Prevent Duplicate Mark
+    # =================================
+
+    duplicate_query = """
+        SELECT id
+        FROM marksheet
+        WHERE
+            prn = %s
+            AND LOWER(subject) = LOWER(%s)
+            AND UPPER(exam) = UPPER(%s)
+    """
+
+
+    cursor.execute(
+        duplicate_query,
+        (
+            student[1],
+            subject,
+            exam
+        )
+    )
+
+
+    duplicate = cursor.fetchone()
+
+
+    if duplicate is not None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Marks for this subject and exam "
+                "already exist. Edit the existing record."
+            )
+        )
+
+
+    # =================================
+    # Calculate Result
+    # =================================
+
+    is_pass = calculate_is_pass(
+        subject,
+        exam,
+        request.marks
+    )
+
+
+    # =================================
+    # Insert Mark
+    # =================================
+
+    insert_query = """
+        INSERT INTO marksheet
+        (
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
+        )
+        VALUES
+        (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        RETURNING
+            id,
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
+    """
+
+
+    cursor.execute(
+        insert_query,
+        (
+            student[1],
+            subject,
+            exam,
+            request.marks,
+            is_pass
+        )
+    )
+
+
+    new_mark = cursor.fetchone()
+
+
+    connection.commit()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    return {
+
+        "message":
+            "Marks added successfully",
+
+        "mark": {
+
+            "id": new_mark[0],
+
+            "prn": new_mark[1],
+
+            "subject": new_mark[2],
+
+            "exam": new_mark[3],
+
+            "marks": new_mark[4],
+
+            "is_pass": new_mark[5]
+
+        }
+
+    }
+
+
+# =================================
+# Update Mark
+# =================================
+
+@app.patch(
+    "/api/admin/marks/{mark_id}"
+)
+def update_student_mark(
+
+    mark_id: int,
+
+    request: MarksUpdateRequest,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Find Existing Mark
+    # =================================
+
+    query = """
+        SELECT
+            id,
+            prn,
+            subject,
+            exam,
+            marks
+        FROM marksheet
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        query,
+        (mark_id,)
+    )
+
+
+    existing_mark = cursor.fetchone()
+
+
+    if existing_mark is None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Marks record not found"
+        )
+
+
+    # =================================
+    # Keep Existing Values
+    # =================================
+
+    new_subject = (
+        request.subject.strip()
+        if request.subject is not None
+        else existing_mark[2]
+    )
+
+
+    new_exam = (
+        request.exam.strip().upper()
+        if request.exam is not None
+        else existing_mark[3]
+    )
+
+
+    new_marks = request.marks
+
+
+    # =================================
+    # Validate Exam
+    # =================================
+
+    if new_exam not in (
+        "TA1",
+        "MSE",
+        "ESE"
+    ):
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Exam must be TA1, MSE, or ESE."
+            )
+        )
+
+
+    # =================================
+    # Check Duplicate
+    # =================================
+
+    duplicate_query = """
+        SELECT id
+        FROM marksheet
+        WHERE
+            prn = %s
+            AND LOWER(subject) = LOWER(%s)
+            AND UPPER(exam) = UPPER(%s)
+            AND id <> %s
+    """
+
+
+    cursor.execute(
+        duplicate_query,
+        (
+            existing_mark[1],
+            new_subject,
+            new_exam,
+            mark_id
+        )
+    )
+
+
+    duplicate = cursor.fetchone()
+
+
+    if duplicate is not None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Another marks record already exists "
+                "for this subject and exam."
+            )
+        )
+
+
+    # =================================
+    # Calculate Result
+    # =================================
+
+    is_pass = calculate_is_pass(
+        new_subject,
+        new_exam,
+        new_marks
+    )
+
+
+    # =================================
+    # Update Database
+    # =================================
+
+    update_query = """
+        UPDATE marksheet
+        SET
+            subject = %s,
+            exam = %s,
+            marks = %s,
+            is_pass = %s
+        WHERE id = %s
+        RETURNING
+            id,
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
+    """
+
+
+    cursor.execute(
+        update_query,
+        (
+            new_subject,
+            new_exam,
+            new_marks,
+            is_pass,
+            mark_id
+        )
+    )
+
+
+    updated_mark = cursor.fetchone()
+
+
+    connection.commit()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    return {
+
+        "message":
+            "Marks updated successfully",
+
+        "mark": {
+
+            "id": updated_mark[0],
+
+            "prn": updated_mark[1],
+
+            "subject": updated_mark[2],
+
+            "exam": updated_mark[3],
+
+            "marks": updated_mark[4],
+
+            "is_pass": updated_mark[5]
+
+        }
+
+    }
+
+
+# =================================
+# Delete Mark
+# =================================
+
+@app.delete(
+    "/api/admin/marks/{mark_id}"
+)
+def delete_student_mark(
+
+    mark_id: int,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Find Mark
+    # =================================
+
+    query = """
+        SELECT
+            id,
+            prn,
+            subject,
+            exam,
+            marks,
+            is_pass
+        FROM marksheet
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        query,
+        (mark_id,)
+    )
+
+
+    mark = cursor.fetchone()
+
+
+    if mark is None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Marks record not found"
+        )
+
+
+    # =================================
+    # Delete
+    # =================================
+
+    delete_query = """
+        DELETE FROM marksheet
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        delete_query,
+        (mark_id,)
+    )
+
+
+    connection.commit()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    return {
+
+        "message":
+            "Marks deleted successfully",
+
+        "mark": {
+
+            "id": mark[0],
+
+            "prn": mark[1],
+
+            "subject": mark[2],
+
+            "exam": mark[3],
+
+            "marks": mark[4],
+
+            "is_pass": mark[5]
 
         }
 

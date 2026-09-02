@@ -21,6 +21,10 @@ if (!authToken || !studentData) {
 }
 
 
+// =================================
+// Current User
+// =================================
+
 let currentUser;
 
 try {
@@ -104,10 +108,47 @@ const logoutButton =
 
 
 // =================================
+// Marks Management DOM Elements
+// =================================
+
+const marksManagementSection =
+    document.getElementById(
+        "marksManagementSection"
+    );
+
+const selectedStudentInfo =
+    document.getElementById(
+        "selectedStudentInfo"
+    );
+
+const marksMessage =
+    document.getElementById(
+        "marksMessage"
+    );
+
+const marksTable =
+    document.getElementById(
+        "marksTable"
+    );
+
+const closeMarksButton =
+    document.getElementById(
+        "closeMarksButton"
+    );
+
+
+// =================================
 // Student Data
 // =================================
 
 let students = [];
+
+
+// =================================
+// Current Marks Student
+// =================================
+
+let selectedStudentId = null;
 
 
 // =================================
@@ -330,6 +371,14 @@ function displayStudents(
 
                     <button
                         class="admin-action-button"
+                        data-action="marks"
+                        data-id="${student.id}"
+                    >
+                        View Marks
+                    </button>
+
+                    <button
+                        class="admin-action-button"
                         data-action="block"
                         data-id="${student.id}"
                         data-blocked="${student.is_blocked}"
@@ -434,6 +483,26 @@ function displayStudents(
                         );
 
 
+                    // =========================
+                    // View Marks
+                    // =========================
+
+                    if (
+                        action ===
+                        "marks"
+                    ) {
+
+                        openMarksManagement(
+                            studentId
+                        );
+
+                    }
+
+
+                    // =========================
+                    // Block / Unblock
+                    // =========================
+
                     if (
                         action ===
                         "block"
@@ -451,6 +520,10 @@ function displayStudents(
 
                     }
 
+
+                    // =========================
+                    // Reset Password
+                    // =========================
 
                     if (
                         action ===
@@ -470,6 +543,302 @@ function displayStudents(
     );
 
 }
+
+
+// =================================
+// Open Marks Management
+// =================================
+
+async function openMarksManagement(
+    studentId
+) {
+
+    const student =
+        students.find(
+            item =>
+                item.id ===
+                studentId
+        );
+
+
+    if (!student) {
+
+        return;
+
+    }
+
+
+    selectedStudentId =
+        studentId;
+
+
+    marksManagementSection.style.display =
+        "block";
+
+
+    selectedStudentInfo.textContent =
+        `${student.name || "Unnamed Student"} • PRN: ${student.prn}`;
+
+
+    marksMessage.textContent =
+        "Loading marks...";
+
+
+    marksTable.innerHTML = "";
+
+
+    // Scroll to marks section
+
+    marksManagementSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/admin/students/${studentId}/marks`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${authToken}`
+                    }
+                }
+            );
+
+
+        // =============================
+        // Authentication
+        // =============================
+
+        if (response.status === 401) {
+
+            logoutUser();
+
+            return;
+
+        }
+
+
+        // =============================
+        // Permission
+        // =============================
+
+        if (response.status === 403) {
+
+            marksMessage.textContent =
+                "Admin permission required.";
+
+            return;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            marksMessage.textContent =
+                data.detail ||
+                "Unable to load marks.";
+
+            return;
+
+        }
+
+
+        displayMarks(
+            data
+        );
+
+
+        marksMessage.textContent =
+            "";
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        marksMessage.textContent =
+            "Unable to connect to the server.";
+
+    }
+
+}
+
+
+// =================================
+// Display Marks
+// =================================
+
+function displayMarks(
+    marks
+) {
+
+    marksTable.innerHTML = "";
+
+
+    if (
+        !Array.isArray(marks) ||
+        marks.length === 0
+    ) {
+
+        marksTable.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    No marks records found.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    marks.forEach(
+        mark => {
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+
+            // =============================
+            // Result
+            // =============================
+
+            let resultText = "—";
+
+            let resultClass = "";
+
+
+            if (
+                mark.is_pass === true
+            ) {
+
+                resultText = "PASS";
+
+                resultClass =
+                    "pass-badge";
+
+            }
+
+            else if (
+                mark.is_pass === false
+            ) {
+
+                resultText = "FAIL";
+
+                resultClass =
+                    "fail-badge";
+
+            }
+
+
+            // =============================
+            // Marks
+            // =============================
+
+            const marksValue =
+                mark.marks === null ||
+                mark.marks === undefined
+                    ? "—"
+                    : mark.marks;
+
+
+            // =============================
+            // Row
+            // =============================
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHTML(
+                        mark.subject
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        mark.exam
+                    )}
+                </td>
+
+                <td>
+                    ${marksValue}
+                </td>
+
+                <td>
+                    ${
+                        resultClass
+                            ? `
+                                <span
+                                    class="${resultClass}"
+                                >
+                                    ${resultText}
+                                </span>
+                            `
+                            : resultText
+                    }
+                </td>
+
+                <td>
+                    <button
+                        class="admin-action-button"
+                        disabled
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        class="admin-action-button"
+                        disabled
+                    >
+                        Delete
+                    </button>
+                </td>
+
+            `;
+
+
+            marksTable.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+// =================================
+// Close Marks Management
+// =================================
+
+closeMarksButton.addEventListener(
+    "click",
+    function () {
+
+        marksManagementSection.style.display =
+            "none";
+
+
+        selectedStudentId =
+            null;
+
+    }
+);
 
 
 // =================================
