@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/api/marks";
+const API_URL = "https://marksheet-website-tdkw.vercel.app/api/marks";
 
 const prnInput = document.getElementById("prn");
 const subjectSelect = document.getElementById("subject");
