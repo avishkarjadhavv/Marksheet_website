@@ -18,9 +18,10 @@ const loginMessage =
     document.getElementById("loginMessage");
 
 
-/*
-    Login student
-*/
+// =================================
+// Login
+// =================================
+
 loginForm.addEventListener(
     "submit",
     async function (event) {
@@ -72,9 +73,10 @@ loginForm.addEventListener(
                 await response.json();
 
 
-            /*
-                Login failed
-            */
+            // =================================
+            // Login Failed
+            // =================================
+
             if (!response.ok) {
 
                 loginMessage.textContent =
@@ -82,21 +84,24 @@ loginForm.addEventListener(
                     "Invalid PRN or password.";
 
                 return;
+
             }
 
 
-            /*
-                Save JWT token
-            */
+            // =================================
+            // Save JWT Token
+            // =================================
+
             localStorage.setItem(
                 "authToken",
                 data.token
             );
 
 
-            /*
-                Save student information
-            */
+            // =================================
+            // Save User Information
+            // =================================
+
             localStorage.setItem(
                 "student",
                 JSON.stringify(
@@ -105,21 +110,34 @@ loginForm.addEventListener(
             );
 
 
-            /*
-                Redirect to dashboard
-            */
-            window.location.href =
-                "dashboard.html";
+            // =================================
+            // Redirect Based On Role
+            // =================================
 
+            if (data.student.role === "admin") {
 
-        } catch (error) {
+                window.location.href =
+                    "admin.html";
+
+            } else {
+
+                window.location.href =
+                    "dashboard.html";
+
+            }
+
+        }
+
+        catch (error) {
 
             console.error(error);
 
             loginMessage.textContent =
                 "Unable to connect to the server.";
 
-        } finally {
+        }
+
+        finally {
 
             loginButton.disabled = false;
 

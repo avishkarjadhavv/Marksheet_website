@@ -1949,3 +1949,93 @@ body {
     }
 
 }
+
+
+/* =================================
+   Admin Search
+================================= */
+
+.admin-search {
+    margin-bottom: 15px;
+}
+
+
+.admin-search input {
+
+    width: 100%;
+
+    padding:
+        13px
+        15px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.12
+        );
+
+    border-radius: 12px;
+
+    outline: none;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.05
+        );
+
+    color: #ffffff;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.2s,
+        background 0.2s,
+        box-shadow 0.2s;
+}
+
+
+.admin-search input::placeholder {
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            0.3
+        );
+}
+
+
+.admin-search input:focus {
+
+    border-color:
+        rgba(
+            129,
+            140,
+            248,
+            0.7
+        );
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    box-shadow:
+        0 0 0 4px
+        rgba(
+            99,
+            102,
+            241,
+            0.1
+        );
+}

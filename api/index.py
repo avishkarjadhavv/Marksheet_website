@@ -15,9 +15,9 @@ from api.database import get_connection
 app = FastAPI()
 
 
-# --------------------------------------------------
+# =================================
 # CORS
-# --------------------------------------------------
+# =================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,9 +27,9 @@ app.add_middleware(
 )
 
 
-# --------------------------------------------------
-# Authentication configuration
-# --------------------------------------------------
+# =================================
+# Authentication Configuration
+# =================================
 
 password_hash = PasswordHash.recommended()
 
@@ -43,18 +43,22 @@ ALGORITHM = "HS256"
 security = HTTPBearer()
 
 
-# --------------------------------------------------
-# Request models
-# --------------------------------------------------
+# =================================
+# Request Models
+# =================================
 
 class LoginRequest(BaseModel):
     prn: str
     password: str
 
 
-# --------------------------------------------------
-# Verify JWT token
-# --------------------------------------------------
+class BlockRequest(BaseModel):
+    is_blocked: bool
+
+
+# =================================
+# Get Current User
+# =================================
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -75,6 +79,7 @@ def get_current_user(
         role = payload.get("role")
 
         if student_id is None or prn is None:
+
             raise HTTPException(
                 status_code=401,
                 detail="Invalid authentication token"
@@ -101,9 +106,27 @@ def get_current_user(
         )
 
 
-# --------------------------------------------------
-# Home endpoint
-# --------------------------------------------------
+# =================================
+# Get Current Admin
+# =================================
+
+def get_current_admin(
+    current_user: dict = Depends(get_current_user)
+):
+
+    if current_user["role"] != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+
+    return current_user
+
+
+# =================================
+# Home
+# =================================
 
 @app.get("/api")
 def home():
@@ -113,12 +136,9 @@ def home():
     }
 
 
-# --------------------------------------------------
-# PUBLIC MARKS ENDPOINT
-# --------------------------------------------------
-# This endpoint is kept temporarily for development.
-# Later we will remove or protect it.
-# --------------------------------------------------
+# =================================
+# Get Marks
+# =================================
 
 @app.get("/api/marks")
 def get_marks(
@@ -128,6 +148,7 @@ def get_marks(
 ):
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
     query = """
@@ -136,58 +157,93 @@ def get_marks(
     """
 
     conditions = []
+
     values = []
+
 
     if prn:
 
-        conditions.append("prn = %s")
+        conditions.append(
+            "prn = %s"
+        )
+
         values.append(prn)
+
 
     if subject:
 
-        conditions.append("subject = %s")
+        conditions.append(
+            "subject = %s"
+        )
+
         values.append(subject)
+
 
     if exam:
 
-        conditions.append("exam = %s")
+        conditions.append(
+            "exam = %s"
+        )
+
         values.append(exam)
+
 
     if conditions:
 
-        query += " WHERE " + " AND ".join(conditions)
+        query += (
+            " WHERE "
+            + " AND ".join(conditions)
+        )
 
-    cursor.execute(query, values)
+
+    cursor.execute(
+        query,
+        values
+    )
 
     rows = cursor.fetchall()
 
     cursor.close()
+
     connection.close()
 
+
     result = []
+
 
     for row in rows:
 
         result.append({
+
             "prn": row[0],
+
             "subject": row[1],
+
             "exam": row[2],
+
             "marks": row[3],
+
             "is_pass": row[4]
+
         })
+
 
     return result
 
 
-# --------------------------------------------------
-# STUDENT LOGIN
-# --------------------------------------------------
+# =================================
+# Login
+# =================================
 
 @app.post("/api/login")
-def login(request: LoginRequest):
+def login(
+    request: LoginRequest
+):
 
     connection = get_connection()
+
     cursor = connection.cursor()
+
 
     query = """
         SELECT
@@ -201,18 +257,21 @@ def login(request: LoginRequest):
         WHERE prn = %s
     """
 
+
     cursor.execute(
         query,
         (request.prn,)
     )
 
+
     student = cursor.fetchone()
 
+
     cursor.close()
+
     connection.close()
 
 
-    # Student does not exist
     if student is None:
 
         raise HTTPException(
@@ -222,23 +281,37 @@ def login(request: LoginRequest):
 
 
     student_id = student[0]
+
     prn = student[1]
+
     stored_password_hash = student[2]
+
     name = student[3]
+
     role = student[4]
+
     is_blocked = student[5]
 
 
-    # Check blocked account
+    # =================================
+    # Check Blocked Account
+    # =================================
+
     if is_blocked:
 
         raise HTTPException(
             status_code=403,
-            detail="Your account has been blocked. Please contact the administrator."
+            detail=(
+                "Your account has been blocked. "
+                "Please contact the administrator."
+            )
         )
 
 
-    # Verify password
+    # =================================
+    # Verify Password
+    # =================================
+
     if not password_hash.verify(
         request.password,
         stored_password_hash
@@ -250,7 +323,10 @@ def login(request: LoginRequest):
         )
 
 
-    # JWT expiration
+    # =================================
+    # Create JWT
+    # =================================
+
     expiration = (
         datetime.now(timezone.utc)
         + timedelta(hours=12)
@@ -258,10 +334,15 @@ def login(request: LoginRequest):
 
 
     token_data = {
+
         "student_id": student_id,
+
         "prn": prn,
+
         "role": role,
+
         "exp": expiration
+
     }
 
 
@@ -279,17 +360,23 @@ def login(request: LoginRequest):
         "token": token,
 
         "student": {
+
             "id": student_id,
+
             "prn": prn,
+
             "name": name,
+
             "role": role
+
         }
+
     }
 
 
-# --------------------------------------------------
-# GET LOGGED-IN STUDENT'S MARKS
-# --------------------------------------------------
+# =================================
+# Get My Marks
+# =================================
 
 @app.get("/api/my-marks")
 def get_my_marks(
@@ -300,6 +387,7 @@ def get_my_marks(
 
 
     connection = get_connection()
+
     cursor = connection.cursor()
 
 
@@ -325,6 +413,7 @@ def get_my_marks(
 
 
     cursor.close()
+
     connection.close()
 
 
@@ -349,3 +438,236 @@ def get_my_marks(
 
 
     return result
+
+
+# =================================
+# Admin Test
+# =================================
+
+@app.get("/api/admin/test")
+def admin_test(
+    current_admin: dict = Depends(get_current_admin)
+):
+
+    return {
+
+        "message":
+            "Admin authorization successful",
+
+        "admin":
+            current_admin
+
+    }
+
+
+# =================================
+# Get All Students
+# =================================
+
+@app.get("/api/admin/students")
+def get_all_students(
+    current_admin: dict = Depends(get_current_admin)
+):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    query = """
+        SELECT
+            id,
+            prn,
+            name,
+            role,
+            is_blocked,
+            created_at
+        FROM students
+        ORDER BY id
+    """
+
+
+    cursor.execute(query)
+
+    rows = cursor.fetchall()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    result = []
+
+
+    for row in rows:
+
+        result.append({
+
+            "id": row[0],
+
+            "prn": row[1],
+
+            "name": row[2],
+
+            "role": row[3],
+
+            "is_blocked": row[4],
+
+            "created_at": row[5]
+
+        })
+
+
+    return result
+
+
+# =================================
+# Block / Unblock Student
+# =================================
+
+@app.patch(
+    "/api/admin/students/{student_id}/block"
+)
+def block_unblock_student(
+
+    student_id: int,
+
+    request: BlockRequest,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    # =================================
+    # Prevent Admin Self-Modification
+    # =================================
+
+    if student_id == current_admin["student_id"]:
+
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot block your own admin account."
+        )
+
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Check Student
+    # =================================
+
+    query = """
+        SELECT
+            id,
+            prn,
+            name,
+            role,
+            is_blocked
+        FROM students
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        query,
+        (student_id,)
+    )
+
+
+    student = cursor.fetchone()
+
+
+    if student is None:
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+
+    # =================================
+    # Prevent Blocking Admin
+    # =================================
+
+    if student[3] == "admin":
+
+        cursor.close()
+
+        connection.close()
+
+        raise HTTPException(
+            status_code=400,
+            detail="Admin accounts cannot be blocked."
+        )
+
+
+    # =================================
+    # Update Status
+    # =================================
+
+    update_query = """
+        UPDATE students
+        SET is_blocked = %s
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        update_query,
+        (
+            request.is_blocked,
+            student_id
+        )
+    )
+
+
+    connection.commit()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    # =================================
+    # Response
+    # =================================
+
+    status_text = (
+        "blocked"
+        if request.is_blocked
+        else "unblocked"
+    )
+
+
+    return {
+
+        "message":
+            f"Student {status_text} successfully",
+
+        "student": {
+
+            "id": student[0],
+
+            "prn": student[1],
+
+            "name": student[2],
+
+            "role": student[3],
+
+            "is_blocked":
+                request.is_blocked
+
+        }
+
+    }

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Dashboard | Student Portal</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body class="dashboard-body">
+
+    <!-- =================================
+         Background Effects
+    ================================= -->
+
+    <div class="background-effects">
+
+        <div class="glow glow-one"></div>
+
+        <div class="glow glow-two"></div>
+
+        <div class="glow glow-three"></div>
+
+    </div>
+
+
+    <main class="dashboard-page">
+
+        <!-- =================================
+             Navigation
+        ================================= -->
+
+        <header class="topbar glass-card">
+
+            <div class="portal-brand">
+
+                <img
+                    src="assets/aj-logo.png"
+                    alt="AJ"
+                    class="aj-logo-dashboard"
+                >
+
+                <div>
+
+                    <strong>
+                        Admin Portal
+                    </strong>
+
+                    <span>
+                        Student Management
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+            >
+                Logout
+            </button>
+
+        </header>
+
+
+        <!-- =================================
+             Welcome
+        ================================= -->
+
+        <section class="welcome-section">
+
+            <div>
+
+                <p class="welcome-label">
+                    ADMINISTRATION
+                </p>
+
+                <h1>
+                    Admin Dashboard
+                </h1>
+
+                <p>
+                    Manage students and academic records.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             Statistics
+        ================================= -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    👥
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Students
+                    </span>
+
+                    <strong id="totalStudents">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <span>
+                        Active
+                    </span>
+
+                    <strong id="activeStudents">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    !
+                </div>
+
+                <div>
+
+                    <span>
+                        Blocked
+                    </span>
+
+                    <strong id="blockedStudents">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card glass-card">
+
+                <div class="stat-icon">
+                    🛡
+                </div>
+
+                <div>
+
+                    <span>
+                        Administrators
+                    </span>
+
+                    <strong id="adminCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             Student Management
+        ================================= -->
+
+        <section class="marks-section glass-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="section-label">
+                        MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Student Management
+                    </h2>
+
+                    <p>
+                        View and manage registered students.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Search -->
+
+            <div class="admin-search">
+
+                <input
+                    type="text"
+                    id="studentSearch"
+                    placeholder="Search by PRN or student name..."
+                >
+
+            </div>
+
+
+            <!-- Message -->
+
+            <div
+                id="adminMessage"
+                class="dashboard-message"
+            ></div>
+
+
+            <!-- Student Table -->
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                PRN
+                            </th>
+
+                            <th>
+                                Student
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="studentsTable">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             Footer
+        ================================= -->
+
+        <footer class="dashboard-footer">
+
+            <span>
+                Student Portal
+            </span>
+
+            <span>
+                Administration Panel
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <script src="admin.js"></script>
+
+</body>
+
+</html>
