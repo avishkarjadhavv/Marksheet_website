@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pwdlib import PasswordHash
 
 import jwt
@@ -54,6 +54,13 @@ class LoginRequest(BaseModel):
 
 class BlockRequest(BaseModel):
     is_blocked: bool
+
+
+class ResetPasswordRequest(BaseModel):
+    new_password: str = Field(
+        min_length=8,
+        max_length=128
+    )
 
 
 # =================================
@@ -148,7 +155,6 @@ def get_marks(
 ):
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
     query = """
@@ -157,7 +163,6 @@ def get_marks(
     """
 
     conditions = []
-
     values = []
 
 
@@ -204,7 +209,6 @@ def get_marks(
     rows = cursor.fetchall()
 
     cursor.close()
-
     connection.close()
 
 
@@ -241,7 +245,6 @@ def login(
 ):
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
 
@@ -266,9 +269,7 @@ def login(
 
     student = cursor.fetchone()
 
-
     cursor.close()
-
     connection.close()
 
 
@@ -281,15 +282,10 @@ def login(
 
 
     student_id = student[0]
-
     prn = student[1]
-
     stored_password_hash = student[2]
-
     name = student[3]
-
     role = student[4]
-
     is_blocked = student[5]
 
 
@@ -387,7 +383,6 @@ def get_my_marks(
 
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
 
@@ -411,9 +406,7 @@ def get_my_marks(
 
     rows = cursor.fetchall()
 
-
     cursor.close()
-
     connection.close()
 
 
@@ -470,7 +463,6 @@ def get_all_students(
 ):
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
 
@@ -491,9 +483,7 @@ def get_all_students(
 
     rows = cursor.fetchall()
 
-
     cursor.close()
-
     connection.close()
 
 
@@ -554,12 +544,11 @@ def block_unblock_student(
 
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
 
     # =================================
-    # Check Student
+    # Find Student
     # =================================
 
     query = """
@@ -586,7 +575,6 @@ def block_unblock_student(
     if student is None:
 
         cursor.close()
-
         connection.close()
 
         raise HTTPException(
@@ -596,13 +584,12 @@ def block_unblock_student(
 
 
     # =================================
-    # Prevent Blocking Admin
+    # Prevent Admin Blocking
     # =================================
 
     if student[3] == "admin":
 
         cursor.close()
-
         connection.close()
 
         raise HTTPException(
@@ -612,7 +599,7 @@ def block_unblock_student(
 
 
     # =================================
-    # Update Status
+    # Update Block Status
     # =================================
 
     update_query = """
@@ -633,15 +620,9 @@ def block_unblock_student(
 
     connection.commit()
 
-
     cursor.close()
-
     connection.close()
 
-
-    # =================================
-    # Response
-    # =================================
 
     status_text = (
         "blocked"
@@ -667,6 +648,148 @@ def block_unblock_student(
 
             "is_blocked":
                 request.is_blocked
+
+        }
+
+    }
+
+
+# =================================
+# Reset Student Password
+# =================================
+
+@app.patch(
+    "/api/admin/students/{student_id}/password"
+)
+def reset_student_password(
+
+    student_id: int,
+
+    request: ResetPasswordRequest,
+
+    current_admin: dict = Depends(
+        get_current_admin
+    )
+
+):
+
+    # =================================
+    # Prevent Admin Self-Modification
+    # =================================
+
+    if student_id == current_admin["student_id"]:
+
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot reset your own admin password here."
+        )
+
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+
+    # =================================
+    # Find Student
+    # =================================
+
+    query = """
+        SELECT
+            id,
+            prn,
+            name,
+            role
+        FROM students
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        query,
+        (student_id,)
+    )
+
+
+    student = cursor.fetchone()
+
+
+    if student is None:
+
+        cursor.close()
+        connection.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+
+    # =================================
+    # Prevent Admin Password Reset
+    # =================================
+
+    if student[3] == "admin":
+
+        cursor.close()
+        connection.close()
+
+        raise HTTPException(
+            status_code=400,
+            detail="Admin passwords cannot be reset from this endpoint."
+        )
+
+
+    # =================================
+    # Hash New Password
+    # =================================
+
+    new_password_hash = password_hash.hash(
+            request.new_password
+        )
+
+
+    # =================================
+    # Update Password
+    # =================================
+
+    update_query = """
+        UPDATE students
+        SET password_hash = %s
+        WHERE id = %s
+    """
+
+
+    cursor.execute(
+        update_query,
+        (
+            new_password_hash,
+            student_id
+        )
+    )
+
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+
+    # =================================
+    # Response
+    # =================================
+
+    return {
+
+        "message":
+            "Student password reset successfully",
+
+        "student": {
+
+            "id": student[0],
+
+            "prn": student[1],
+
+            "name": student[2]
 
         }
 

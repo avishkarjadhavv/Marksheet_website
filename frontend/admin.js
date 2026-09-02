@@ -30,8 +30,13 @@ try {
 
 } catch (error) {
 
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("student");
+    localStorage.removeItem(
+        "authToken"
+    );
+
+    localStorage.removeItem(
+        "student"
+    );
 
     window.location.href =
         "index.html";
@@ -58,28 +63,44 @@ if (currentUser.role !== "admin") {
 // =================================
 
 const totalStudents =
-    document.getElementById("totalStudents");
+    document.getElementById(
+        "totalStudents"
+    );
 
 const activeStudents =
-    document.getElementById("activeStudents");
+    document.getElementById(
+        "activeStudents"
+    );
 
 const blockedStudents =
-    document.getElementById("blockedStudents");
+    document.getElementById(
+        "blockedStudents"
+    );
 
 const adminCount =
-    document.getElementById("adminCount");
+    document.getElementById(
+        "adminCount"
+    );
 
 const studentsTable =
-    document.getElementById("studentsTable");
+    document.getElementById(
+        "studentsTable"
+    );
 
 const studentSearch =
-    document.getElementById("studentSearch");
+    document.getElementById(
+        "studentSearch"
+    );
 
 const adminMessage =
-    document.getElementById("adminMessage");
+    document.getElementById(
+        "adminMessage"
+    );
 
 const logoutButton =
-    document.getElementById("logoutButton");
+    document.getElementById(
+        "logoutButton"
+    );
 
 
 // =================================
@@ -121,16 +142,7 @@ async function loadStudents() {
 
         if (response.status === 401) {
 
-            localStorage.removeItem(
-                "authToken"
-            );
-
-            localStorage.removeItem(
-                "student"
-            );
-
-            window.location.href =
-                "index.html";
+            logoutUser();
 
             return;
 
@@ -170,7 +182,9 @@ async function loadStudents() {
 
         updateStatistics();
 
-        displayStudents(students);
+        displayStudents(
+            students
+        );
 
     }
 
@@ -236,7 +250,9 @@ function updateStatistics() {
 // Display Students
 // =================================
 
-function displayStudents(studentList) {
+function displayStudents(
+    studentList
+) {
 
     studentsTable.innerHTML = "";
 
@@ -256,110 +272,136 @@ function displayStudents(studentList) {
     }
 
 
-    studentList.forEach(student => {
+    studentList.forEach(
+        student => {
 
-        const row =
-            document.createElement("tr");
-
-
-        // =============================
-        // Status
-        // =============================
-
-        const statusText =
-            student.is_blocked
-                ? "BLOCKED"
-                : "ACTIVE";
+            const row =
+                document.createElement(
+                    "tr"
+                );
 
 
-        const statusClass =
-            student.is_blocked
-                ? "fail-badge"
-                : "pass-badge";
+            // =============================
+            // Status
+            // =============================
 
-
-        // =============================
-        // Action
-        // =============================
-
-        let actionHTML = "";
-
-
-        if (student.role === "admin") {
-
-            actionHTML = `
-                <button
-                    class="admin-action-button"
-                    disabled
-                >
-                    Admin
-                </button>
-            `;
-
-        } else {
-
-            const buttonText =
+            const statusText =
                 student.is_blocked
-                    ? "Unblock"
-                    : "Block";
+                    ? "BLOCKED"
+                    : "ACTIVE";
 
 
-            actionHTML = `
-                <button
-                    class="admin-action-button"
-                    data-id="${student.id}"
-                    data-blocked="${student.is_blocked}"
-                >
-                    ${buttonText}
-                </button>
+            const statusClass =
+                student.is_blocked
+                    ? "fail-badge"
+                    : "pass-badge";
+
+
+            // =============================
+            // Action
+            // =============================
+
+            let actionHTML = "";
+
+
+            if (
+                student.role ===
+                "admin"
+            ) {
+
+                actionHTML = `
+                    <button
+                        class="admin-action-button"
+                        disabled
+                    >
+                        Admin
+                    </button>
+                `;
+
+            } else {
+
+                const buttonText =
+                    student.is_blocked
+                        ? "Unblock"
+                        : "Block";
+
+
+                actionHTML = `
+
+                    <button
+                        class="admin-action-button"
+                        data-action="block"
+                        data-id="${student.id}"
+                        data-blocked="${student.is_blocked}"
+                    >
+                        ${buttonText}
+                    </button>
+
+                    <button
+                        class="admin-action-button"
+                        data-action="password"
+                        data-id="${student.id}"
+                    >
+                        Reset Password
+                    </button>
+
+                `;
+
+            }
+
+
+            // =============================
+            // Row
+            // =============================
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHTML(
+                        student.prn
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        student.name ||
+                        "Unnamed Student"
+                    )}
+                </td>
+
+                <td>
+                    <span class="role-badge">
+                        ${escapeHTML(
+                            student.role
+                        )}
+                    </span>
+                </td>
+
+                <td>
+                    <span
+                        class="${statusClass}"
+                    >
+                        ${statusText}
+                    </span>
+                </td>
+
+                <td>
+                    ${actionHTML}
+                </td>
+
             `;
+
+
+            studentsTable.appendChild(
+                row
+            );
 
         }
-
-
-        // =============================
-        // Row
-        // =============================
-
-        row.innerHTML = `
-
-            <td>
-                ${escapeHTML(student.prn)}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    student.name ||
-                    "Unnamed Student"
-                )}
-            </td>
-
-            <td>
-                <span class="role-badge">
-                    ${escapeHTML(student.role)}
-                </span>
-            </td>
-
-            <td>
-                <span class="${statusClass}">
-                    ${statusText}
-                </span>
-            </td>
-
-            <td>
-                ${actionHTML}
-            </td>
-
-        `;
-
-
-        studentsTable.appendChild(row);
-
-    });
+    );
 
 
     // =============================
-    // Add Action Listeners
+    // Action Buttons
     // =============================
 
     const actionButtons =
@@ -368,36 +410,64 @@ function displayStudents(studentList) {
         );
 
 
-    actionButtons.forEach(button => {
+    actionButtons.forEach(
+        button => {
 
-        if (button.disabled) {
-            return;
-        }
+            if (button.disabled) {
 
-
-        button.addEventListener(
-            "click",
-            function () {
-
-                const studentId =
-                    Number(
-                        button.dataset.id
-                    );
-
-
-                const currentlyBlocked =
-                    button.dataset.blocked === "true";
-
-
-                toggleStudentBlock(
-                    studentId,
-                    currentlyBlocked
-                );
+                return;
 
             }
-        );
 
-    });
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const action =
+                        button.dataset.action;
+
+
+                    const studentId =
+                        Number(
+                            button.dataset.id
+                        );
+
+
+                    if (
+                        action ===
+                        "block"
+                    ) {
+
+                        const currentlyBlocked =
+                            button.dataset.blocked ===
+                            "true";
+
+
+                        toggleStudentBlock(
+                            studentId,
+                            currentlyBlocked
+                        );
+
+                    }
+
+
+                    if (
+                        action ===
+                        "password"
+                    ) {
+
+                        resetStudentPassword(
+                            studentId
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
 
 }
 
@@ -414,7 +484,8 @@ async function toggleStudentBlock(
     const student =
         students.find(
             item =>
-                item.id === studentId
+                item.id ===
+                studentId
         );
 
 
@@ -491,29 +562,22 @@ async function toggleStudentBlock(
         // Authentication Error
         // =============================
 
-        if (response.status === 401) {
+        if (
+            response.status ===
+            401
+        ) {
 
-            localStorage.removeItem(
-                "authToken"
-            );
-
-            localStorage.removeItem(
-                "student"
-            );
-
-            window.location.href =
-                "index.html";
+            logoutUser();
 
             return;
 
         }
 
 
-        // =============================
-        // Permission Error
-        // =============================
-
-        if (response.status === 403) {
+        if (
+            response.status ===
+            403
+        ) {
 
             adminMessage.textContent =
                 "Admin permission required.";
@@ -522,10 +586,6 @@ async function toggleStudentBlock(
 
         }
 
-
-        // =============================
-        // Other Errors
-        // =============================
 
         if (!response.ok) {
 
@@ -550,13 +610,238 @@ async function toggleStudentBlock(
             data.message;
 
 
-        // =============================
-        // Refresh Dashboard
-        // =============================
-
         updateStatistics();
 
         applyCurrentSearch();
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        adminMessage.textContent =
+            "Unable to connect to the server.";
+
+    }
+
+}
+
+
+// =================================
+// Reset Student Password
+// =================================
+
+async function resetStudentPassword(
+    studentId
+) {
+
+    const student =
+        students.find(
+            item =>
+                item.id ===
+                studentId
+        );
+
+
+    if (!student) {
+
+        return;
+
+    }
+
+
+    // =================================
+    // Ask For New Password
+    // =================================
+
+    const newPassword =
+        prompt(
+            `Enter a new password for ${student.name || student.prn}:\n\nMinimum 8 characters.`
+        );
+
+
+    // User cancelled
+
+    if (newPassword === null) {
+
+        return;
+
+    }
+
+
+    // =================================
+    // Validate Password
+    // =================================
+
+    if (
+        newPassword.length < 8
+    ) {
+
+        alert(
+            "Password must contain at least 8 characters."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        newPassword.length > 128
+    ) {
+
+        alert(
+            "Password cannot contain more than 128 characters."
+        );
+
+        return;
+
+    }
+
+
+    // =================================
+    // Confirm Password
+    // =================================
+
+    const confirmPassword =
+        prompt(
+            "Confirm the new password:"
+        );
+
+
+    if (
+        confirmPassword ===
+        null
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        newPassword !==
+        confirmPassword
+    ) {
+
+        alert(
+            "Passwords do not match."
+        );
+
+        return;
+
+    }
+
+
+    // =================================
+    // Final Confirmation
+    // =================================
+
+    const confirmed =
+        confirm(
+            `Reset the password for ${student.name || student.prn}?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        adminMessage.textContent =
+            "Resetting password...";
+
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/admin/students/${studentId}/password`,
+                {
+                    method: "PATCH",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            `Bearer ${authToken}`
+
+                    },
+
+                    body: JSON.stringify({
+
+                        new_password:
+                            newPassword
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        // =============================
+        // Authentication Error
+        // =============================
+
+        if (
+            response.status ===
+            401
+        ) {
+
+            logoutUser();
+
+            return;
+
+        }
+
+
+        // =============================
+        // Permission Error
+        // =============================
+
+        if (
+            response.status ===
+            403
+        ) {
+
+            adminMessage.textContent =
+                "Admin permission required.";
+
+            return;
+
+        }
+
+
+        // =============================
+        // Other Errors
+        // =============================
+
+        if (!response.ok) {
+
+            adminMessage.textContent =
+                data.detail ||
+                "Unable to reset password.";
+
+            return;
+
+        }
+
+
+        // =============================
+        // Success
+        // =============================
+
+        adminMessage.textContent =
+            data.message;
 
     }
 
@@ -598,9 +883,13 @@ function applyCurrentSearch() {
             .toLowerCase();
 
 
-    if (searchValue === "") {
+    if (
+        searchValue === ""
+    ) {
 
-        displayStudents(students);
+        displayStudents(
+            students
+        );
 
         return;
 
@@ -608,26 +897,34 @@ function applyCurrentSearch() {
 
 
     const filteredStudents =
-        students.filter(student => {
+        students.filter(
+            student => {
 
-            const prn =
-                String(
-                    student.prn || ""
-                ).toLowerCase();
-
-
-            const name =
-                String(
-                    student.name || ""
-                ).toLowerCase();
+                const prn =
+                    String(
+                        student.prn ||
+                        ""
+                    ).toLowerCase();
 
 
-            return (
-                prn.includes(searchValue) ||
-                name.includes(searchValue)
-            );
+                const name =
+                    String(
+                        student.name ||
+                        ""
+                    ).toLowerCase();
 
-        });
+
+                return (
+                    prn.includes(
+                        searchValue
+                    ) ||
+                    name.includes(
+                        searchValue
+                    )
+                );
+
+            }
+        );
 
 
     displayStudents(
@@ -645,19 +942,30 @@ logoutButton.addEventListener(
     "click",
     function () {
 
-        localStorage.removeItem(
-            "authToken"
-        );
-
-        localStorage.removeItem(
-            "student"
-        );
-
-        window.location.href =
-            "index.html";
+        logoutUser();
 
     }
 );
+
+
+// =================================
+// Logout Helper
+// =================================
+
+function logoutUser() {
+
+    localStorage.removeItem(
+        "authToken"
+    );
+
+    localStorage.removeItem(
+        "student"
+    );
+
+    window.location.href =
+        "index.html";
+
+}
 
 
 // =================================
@@ -667,11 +975,26 @@ logoutButton.addEventListener(
 function escapeHTML(value) {
 
     return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
 }
 
