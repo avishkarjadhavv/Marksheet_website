@@ -136,6 +136,61 @@ const closeMarksButton =
         "closeMarksButton"
     );
 
+const addMarksButton =
+    document.getElementById(
+        "addMarksButton"
+    );
+
+
+// =================================
+// Marks Form DOM Elements
+// =================================
+
+const marksFormSection =
+    document.getElementById(
+        "marksFormSection"
+    );
+
+const marksForm =
+    document.getElementById(
+        "marksForm"
+    );
+
+const marksFormTitle =
+    document.getElementById(
+        "marksFormTitle"
+    );
+
+const marksFormMessage =
+    document.getElementById(
+        "marksFormMessage"
+    );
+
+const marksSubject =
+    document.getElementById(
+        "marksSubject"
+    );
+
+const marksExam =
+    document.getElementById(
+        "marksExam"
+    );
+
+const marksValue =
+    document.getElementById(
+        "marksValue"
+    );
+
+const saveMarksButton =
+    document.getElementById(
+        "saveMarksButton"
+    );
+
+const cancelMarksButton =
+    document.getElementById(
+        "cancelMarksButton"
+    );
+
 
 // =================================
 // Student Data
@@ -145,10 +200,24 @@ let students = [];
 
 
 // =================================
-// Current Marks Student
+// Current Selected Student
 // =================================
 
 let selectedStudentId = null;
+
+
+// =================================
+// Current Marks
+// =================================
+
+let currentMarks = [];
+
+
+// =================================
+// Editing Mark
+// =================================
+
+let editingMarkId = null;
 
 
 // =================================
@@ -571,9 +640,16 @@ async function openMarksManagement(
     selectedStudentId =
         studentId;
 
+    editingMarkId =
+        null;
+
 
     marksManagementSection.style.display =
         "block";
+
+
+    marksFormSection.style.display =
+        "none";
 
 
     selectedStudentInfo.textContent =
@@ -587,91 +663,15 @@ async function openMarksManagement(
     marksTable.innerHTML = "";
 
 
-    // Scroll to marks section
-
     marksManagementSection.scrollIntoView({
         behavior: "smooth",
         block: "start"
     });
 
 
-    try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/admin/students/${studentId}/marks`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            `Bearer ${authToken}`
-                    }
-                }
-            );
-
-
-        // =============================
-        // Authentication
-        // =============================
-
-        if (response.status === 401) {
-
-            logoutUser();
-
-            return;
-
-        }
-
-
-        // =============================
-        // Permission
-        // =============================
-
-        if (response.status === 403) {
-
-            marksMessage.textContent =
-                "Admin permission required.";
-
-            return;
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            marksMessage.textContent =
-                data.detail ||
-                "Unable to load marks.";
-
-            return;
-
-        }
-
-
-        displayMarks(
-            data
-        );
-
-
-        marksMessage.textContent =
-            "";
-
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        marksMessage.textContent =
-            "Unable to connect to the server.";
-
-    }
+    await loadStudentMarks(
+        studentId
+    );
 
 }
 
@@ -687,9 +687,14 @@ function displayMarks(
     marksTable.innerHTML = "";
 
 
+    currentMarks =
+        Array.isArray(marks)
+            ? marks
+            : [];
+
+
     if (
-        !Array.isArray(marks) ||
-        marks.length === 0
+        currentMarks.length === 0
     ) {
 
         marksTable.innerHTML = `
@@ -705,7 +710,7 @@ function displayMarks(
     }
 
 
-    marks.forEach(
+    currentMarks.forEach(
         mark => {
 
             const row =
@@ -750,7 +755,7 @@ function displayMarks(
             // Marks
             // =============================
 
-            const marksValue =
+            const marksDisplay =
                 mark.marks === null ||
                 mark.marks === undefined
                     ? "—"
@@ -776,7 +781,7 @@ function displayMarks(
                 </td>
 
                 <td>
-                    ${marksValue}
+                    ${marksDisplay}
                 </td>
 
                 <td>
@@ -794,19 +799,23 @@ function displayMarks(
                 </td>
 
                 <td>
+
                     <button
                         class="admin-action-button"
-                        disabled
+                        data-mark-action="edit"
+                        data-mark-id="${mark.id}"
                     >
                         Edit
                     </button>
 
                     <button
                         class="admin-action-button"
-                        disabled
+                        data-mark-action="delete"
+                        data-mark-id="${mark.id}"
                     >
                         Delete
                     </button>
+
                 </td>
 
             `;
@@ -818,6 +827,765 @@ function displayMarks(
 
         }
     );
+
+
+    // =============================
+    // Edit Buttons
+    // =============================
+
+    const editButtons =
+        marksTable.querySelectorAll(
+            '[data-mark-action="edit"]'
+        );
+
+
+    editButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const markId =
+                        Number(
+                            button.dataset.markId
+                        );
+
+
+                    openEditMarksForm(
+                        markId
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    // =============================
+    // Delete Buttons
+    // =============================
+
+    const deleteButtons =
+        marksTable.querySelectorAll(
+            '[data-mark-action="delete"]'
+        );
+
+
+    deleteButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const markId =
+                        Number(
+                            button.dataset.markId
+                        );
+
+
+                    deleteMark(
+                        markId
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+// =================================
+// Open Add Marks Form
+// =================================
+
+addMarksButton.addEventListener(
+    "click",
+    function () {
+
+        if (
+            selectedStudentId === null
+        ) {
+
+            return;
+
+        }
+
+
+        editingMarkId =
+            null;
+
+
+        marksForm.reset();
+
+
+        marksFormTitle.textContent =
+            "Add Marks";
+
+
+        marksFormMessage.textContent =
+            "";
+
+
+        saveMarksButton.textContent =
+            "Save Marks";
+
+
+        marksFormSection.style.display =
+            "block";
+
+
+        marksFormSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+);
+
+
+// =================================
+// Open Edit Marks Form
+// =================================
+
+function openEditMarksForm(
+    markId
+) {
+
+    const mark =
+        currentMarks.find(
+            item =>
+                Number(item.id) ===
+                Number(markId)
+        );
+
+
+    if (!mark) {
+
+        return;
+
+    }
+
+
+    editingMarkId =
+        Number(markId);
+
+
+    marksFormTitle.textContent =
+        "Edit Marks";
+
+
+    marksFormMessage.textContent =
+        "";
+
+
+    marksSubject.value =
+        mark.subject || "";
+
+
+    marksExam.value =
+        mark.exam || "";
+
+
+    marksValue.value =
+        mark.marks === null ||
+        mark.marks === undefined
+            ? ""
+            : mark.marks;
+
+
+    saveMarksButton.textContent =
+        "Save Changes";
+
+
+    marksFormSection.style.display =
+        "block";
+
+
+    marksFormSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+}
+
+
+// =================================
+// Cancel Marks Form
+// =================================
+
+cancelMarksButton.addEventListener(
+    "click",
+    function () {
+
+        marksForm.reset();
+
+        marksFormMessage.textContent =
+            "";
+
+        editingMarkId =
+            null;
+
+        marksFormSection.style.display =
+            "none";
+
+    }
+);
+
+
+// =================================
+// Save Marks
+// =================================
+
+marksForm.addEventListener(
+    "submit",
+    async function (event) {
+
+        event.preventDefault();
+
+
+        if (
+            selectedStudentId === null
+        ) {
+
+            marksFormMessage.textContent =
+                "Please select a student first.";
+
+            return;
+
+        }
+
+
+        const subject =
+            marksSubject.value.trim();
+
+        const exam =
+            marksExam.value;
+
+        const marks =
+            Number(
+                marksValue.value
+            );
+
+
+        // =============================
+        // Frontend Validation
+        // =============================
+
+        if (subject === "") {
+
+            marksFormMessage.textContent =
+                "Subject is required.";
+
+            return;
+
+        }
+
+
+        if (
+            !["TA1", "MSE", "ESE"].includes(
+                exam
+            )
+        ) {
+
+            marksFormMessage.textContent =
+                "Please select a valid exam.";
+
+            return;
+
+        }
+
+
+        if (
+            !Number.isInteger(marks) ||
+            marks < 0
+        ) {
+
+            marksFormMessage.textContent =
+                "Marks must be a valid number greater than or equal to 0.";
+
+            return;
+
+        }
+
+
+        try {
+
+            saveMarksButton.disabled =
+                true;
+
+
+            saveMarksButton.textContent =
+                editingMarkId === null
+                    ? "Saving..."
+                    : "Updating...";
+
+
+            marksFormMessage.textContent =
+                editingMarkId === null
+                    ? "Adding marks..."
+                    : "Updating marks...";
+
+
+            // =============================
+            // ADD MARKS
+            // =============================
+
+            if (
+                editingMarkId === null
+            ) {
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/admin/students/${selectedStudentId}/marks`,
+                        {
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                "Authorization":
+                                    `Bearer ${authToken}`
+
+                            },
+
+                            body: JSON.stringify({
+
+                                subject:
+                                    subject,
+
+                                exam:
+                                    exam,
+
+                                marks:
+                                    marks
+
+                            })
+
+                        }
+                    );
+
+
+                if (
+                    response.status === 401
+                ) {
+
+                    logoutUser();
+
+                    return;
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    response.status === 403
+                ) {
+
+                    marksFormMessage.textContent =
+                        data.detail ||
+                        "Admin permission required.";
+
+                    return;
+
+                }
+
+
+                if (!response.ok) {
+
+                    marksFormMessage.textContent =
+                        data.detail ||
+                        "Unable to add marks.";
+
+                    return;
+
+                }
+
+
+                marksFormMessage.textContent =
+                    "Marks added successfully.";
+
+            }
+
+
+            // =============================
+            // EDIT MARKS
+            // =============================
+
+            else {
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/admin/marks/${editingMarkId}`,
+                        {
+                            method: "PATCH",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                "Authorization":
+                                    `Bearer ${authToken}`
+
+                            },
+
+                            body: JSON.stringify({
+
+                                subject:
+                                    subject,
+
+                                exam:
+                                    exam,
+
+                                marks:
+                                    marks
+
+                            })
+
+                        }
+                    );
+
+
+                if (
+                    response.status === 401
+                ) {
+
+                    logoutUser();
+
+                    return;
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    response.status === 403
+                ) {
+
+                    marksFormMessage.textContent =
+                        data.detail ||
+                        "Admin permission required.";
+
+                    return;
+
+                }
+
+
+                if (!response.ok) {
+
+                    marksFormMessage.textContent =
+                        data.detail ||
+                        "Unable to update marks.";
+
+                    return;
+
+                }
+
+
+                marksFormMessage.textContent =
+                    "Marks updated successfully.";
+
+            }
+
+
+            // =============================
+            // Reload Marks
+            // =============================
+
+            await loadStudentMarks(
+                selectedStudentId
+            );
+
+
+            // =============================
+            // Reset Form State
+            // =============================
+
+            marksForm.reset();
+
+            editingMarkId =
+                null;
+
+
+            saveMarksButton.textContent =
+                "Save Marks";
+
+
+            // =============================
+            // Hide Form
+            // =============================
+
+            setTimeout(
+                function () {
+
+                    marksFormSection.style.display =
+                        "none";
+
+                    marksFormMessage.textContent =
+                        "";
+
+                },
+                700
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            marksFormMessage.textContent =
+                "Unable to connect to the server.";
+
+        }
+
+        finally {
+
+            saveMarksButton.disabled =
+                false;
+
+            if (
+                editingMarkId === null
+            ) {
+
+                saveMarksButton.textContent =
+                    "Save Marks";
+
+            }
+
+            else {
+
+                saveMarksButton.textContent =
+                    "Save Changes";
+
+            }
+
+        }
+
+    }
+);
+
+
+// =================================
+// Load Student Marks
+// =================================
+
+async function loadStudentMarks(
+    studentId
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/admin/students/${studentId}/marks`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${authToken}`
+                    }
+                }
+            );
+
+
+        if (
+            response.status === 401
+        ) {
+
+            logoutUser();
+
+            return;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            marksMessage.textContent =
+                data.detail ||
+                "Unable to load marks.";
+
+            return;
+
+        }
+
+
+        displayMarks(
+            data.marks
+        );
+
+
+        marksMessage.textContent =
+            "";
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        marksMessage.textContent =
+            "Unable to load marks.";
+
+    }
+
+}
+
+
+// =================================
+// Delete Mark
+// =================================
+
+async function deleteMark(
+    markId
+) {
+
+    const mark =
+        currentMarks.find(
+            item =>
+                Number(item.id) ===
+                Number(markId)
+        );
+
+
+    if (!mark) {
+
+        return;
+
+    }
+
+
+    // =================================
+    // Confirmation
+    // =================================
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to delete ${mark.subject} - ${mark.exam} (${mark.marks ?? "No marks"})?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        marksMessage.textContent =
+            "Deleting mark...";
+
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/admin/marks/${markId}`,
+                {
+                    method: "DELETE",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${authToken}`
+                    }
+                }
+            );
+
+
+        // =============================
+        // Authentication
+        // =============================
+
+        if (
+            response.status === 401
+        ) {
+
+            logoutUser();
+
+            return;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        // =============================
+        // Permission
+        // =============================
+
+        if (
+            response.status === 403
+        ) {
+
+            marksMessage.textContent =
+                data.detail ||
+                "Admin permission required.";
+
+            return;
+
+        }
+
+
+        // =============================
+        // Other Errors
+        // =============================
+
+        if (!response.ok) {
+
+            marksMessage.textContent =
+                data.detail ||
+                "Unable to delete mark.";
+
+            return;
+
+        }
+
+
+        // =============================
+        // Success
+        // =============================
+
+        marksMessage.textContent =
+            "Mark deleted successfully.";
+
+
+        // Refresh table
+
+        await loadStudentMarks(
+            selectedStudentId
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        marksMessage.textContent =
+            "Unable to connect to the server.";
+
+    }
 
 }
 
@@ -834,7 +1602,22 @@ closeMarksButton.addEventListener(
             "none";
 
 
+        marksFormSection.style.display =
+            "none";
+
+
+        marksForm.reset();
+
+
+        marksFormMessage.textContent =
+            "";
+
+
         selectedStudentId =
+            null;
+
+
+        editingMarkId =
             null;
 
     }
