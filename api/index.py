@@ -21,7 +21,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://marksheet-website1.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -33,10 +33,10 @@ app.add_middleware(
 
 password_hash = PasswordHash.recommended()
 
-SECRET_KEY = os.getenv(
-    "JWT_SECRET",
-    "development-secret-change-this"
-)
+SECRET_KEY = os.getenv("JWT_SECRET")
+
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET environment variable is not set")
 
 ALGORITHM = "HS256"
 
@@ -182,11 +182,8 @@ def get_current_user(
         )
 
         student_id = payload.get("student_id")
-
         prn = payload.get("prn")
-
         role = payload.get("role")
-
 
         if student_id is None or prn is None:
 
@@ -195,6 +192,35 @@ def get_current_user(
                 detail="Invalid authentication token"
             )
 
+        # Check current account status in database
+        with get_connection() as connection:
+
+            with connection.cursor() as cursor:
+
+                cursor.execute(
+                    """
+                    SELECT is_blocked
+                    FROM students
+                    WHERE id = %s
+                    """,
+                    (student_id,)
+                )
+
+                student = cursor.fetchone()
+
+        if student is None:
+
+            raise HTTPException(
+                status_code=401,
+                detail="Student account not found"
+            )
+
+        if student[0]:
+
+            raise HTTPException(
+                status_code=403,
+                detail="Your account has been blocked"
+            )
 
         return {
 
@@ -206,7 +232,6 @@ def get_current_user(
 
         }
 
-
     except jwt.ExpiredSignatureError:
 
         raise HTTPException(
@@ -214,13 +239,93 @@ def get_current_user(
             detail="Authentication token has expired"
         )
 
-
     except jwt.InvalidTokenError:
 
         raise HTTPException(
             status_code=401,
             detail="Invalid authentication token"
         )
+
+
+# =================================
+# Login
+# =================================
+
+@app.post("/api/login")
+def login(request: LoginRequest):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT
+            id,
+            prn,
+            password_hash,
+            name,
+            role,
+            is_blocked
+        FROM students
+        WHERE prn = %s
+    """
+
+    cursor.execute(
+        query,
+        (request.prn.strip(),)
+    )
+
+    student = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if student is None:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid PRN or password"
+        )
+
+    if not password_hash.verify(
+        request.password,
+        student[2]
+    ):
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid PRN or password"
+        )
+
+    if student[5]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been blocked"
+        )
+
+    token_payload = {
+        "student_id": student[0],
+        "prn": student[1],
+        "role": student[4],
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+
+    token = jwt.encode(
+        token_payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return {
+        "token": token,
+        "token_type": "bearer",
+        "student": {
+            "id": student[0],
+            "prn": student[1],
+            "name": student[3],
+            "role": student[4]
+        }
+    }
 
 
 # =================================
@@ -255,256 +360,6 @@ def home():
         "message": "Marksheet API is running"
     }
 
-
-# =================================
-# Get Marks
-# =================================
-
-@app.get("/api/marks")
-def get_marks(
-
-    prn: str | None = None,
-
-    subject: str | None = None,
-
-    exam: str | None = None
-
-):
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-
-    query = """
-        SELECT
-            prn,
-            subject,
-            exam,
-            marks,
-            is_pass
-        FROM marksheet
-    """
-
-
-    conditions = []
-
-    values = []
-
-
-    if prn:
-
-        conditions.append(
-            "prn = %s"
-        )
-
-        values.append(prn)
-
-
-    if subject:
-
-        conditions.append(
-            "subject = %s"
-        )
-
-        values.append(subject)
-
-
-    if exam:
-
-        conditions.append(
-            "exam = %s"
-        )
-
-        values.append(exam)
-
-
-    if conditions:
-
-        query += (
-            " WHERE "
-            + " AND ".join(conditions)
-        )
-
-
-    cursor.execute(
-        query,
-        values
-    )
-
-
-    rows = cursor.fetchall()
-
-
-    cursor.close()
-
-    connection.close()
-
-
-    result = []
-
-
-    for row in rows:
-
-        result.append({
-
-            "prn": row[0],
-
-            "subject": row[1],
-
-            "exam": row[2],
-
-            "marks": row[3],
-
-            "is_pass": row[4]
-
-        })
-
-
-    return result
-
-
-# =================================
-# Login
-# =================================
-
-@app.post("/api/login")
-def login(
-    request: LoginRequest
-):
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-
-    query = """
-        SELECT
-            id,
-            prn,
-            password_hash,
-            name,
-            role,
-            is_blocked
-        FROM students
-        WHERE prn = %s
-    """
-
-
-    cursor.execute(
-        query,
-        (request.prn,)
-    )
-
-
-    student = cursor.fetchone()
-
-
-    cursor.close()
-
-    connection.close()
-
-
-    if student is None:
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid PRN or password"
-        )
-
-
-    student_id = student[0]
-
-    prn = student[1]
-
-    stored_password_hash = student[2]
-
-    name = student[3]
-
-    role = student[4]
-
-    is_blocked = student[5]
-
-
-    # =================================
-    # Check Blocked Account
-    # =================================
-
-    if is_blocked:
-
-        raise HTTPException(
-            status_code=403,
-            detail=(
-                "Your account has been blocked. "
-                "Please contact the administrator."
-            )
-        )
-
-
-    # =================================
-    # Verify Password
-    # =================================
-
-    if not password_hash.verify(
-        request.password,
-        stored_password_hash
-    ):
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid PRN or password"
-        )
-
-
-    # =================================
-    # Create JWT
-    # =================================
-
-    expiration = (
-        datetime.now(timezone.utc)
-        + timedelta(hours=12)
-    )
-
-
-    token_data = {
-
-        "student_id": student_id,
-
-        "prn": prn,
-
-        "role": role,
-
-        "exp": expiration
-
-    }
-
-
-    token = jwt.encode(
-        token_data,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-
-
-    return {
-
-        "message": "Login successful",
-
-        "token": token,
-
-        "student": {
-
-            "id": student_id,
-
-            "prn": prn,
-
-            "name": name,
-
-            "role": role
-
-        }
-
-    }
 
 
 # =================================
